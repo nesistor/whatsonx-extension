@@ -8,6 +8,14 @@ import (
 	"github.com/go-chi/cors"
 )
 
+// routes sets up the API endpoints for the application
+// @Summary Set up API routes for the application
+// @Description Defines all the routes and the associated handlers for the application.
+// @Tags Routes
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string "Routes set successfully"
+// @Router /routes [get]
 func (app *Config) routes() http.Handler {
 	mux := chi.NewRouter()
 

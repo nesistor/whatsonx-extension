@@ -19,6 +19,15 @@ var oauthConfig = &oauth2.Config{
 	Endpoint:     google.Endpoint,
 }
 
+// AddUser handles user authorization process
+// @Summary Initiates user authorization
+// @Description Redirects the user to Google OAuth2 authorization page to allow app access.
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string "User authorization link"
+// @Failure 500 {string} string "Error initiating authorization"
+// @Router /add-user [post]
 func (app *Config) AddUser(w http.ResponseWriter, r *http.Request) {
 	url := oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline)
 	response := jsonResponse{
@@ -33,6 +42,15 @@ func (app *Config) AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// OAuthCallback handles the callback from Google after user authorization
+// @Summary Handles OAuth2 callback
+// @Description Handles the Google OAuth2 callback and stores the access token.
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Success 200 {string} string "Authorization successful"
+// @Failure 500 {string} string "Error during OAuth2 callback"
+// @Router /oauth2callback [get]
 func (app *Config) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
@@ -62,6 +80,15 @@ func (app *Config) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// CheckAvailability checks user's calendar availability
+// @Summary Check user calendar availability
+// @Description Retrieves free slots from the user's Google Calendar within a given time range.
+// @Tags Calendar
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} string "List of free slots"
+// @Failure 500 {string} string "Error retrieving availability"
+// @Router /check-availability [get]
 func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 	token, err := app.Models.GetUserToken("user_email@example.com")
 	if err != nil {
@@ -87,6 +114,17 @@ func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// AddUserToGroup adds a user to a group
+// @Summary Add a user to a group
+// @Description Adds a specified user to a specified group.
+// @Tags Group
+// @Accept  json
+// @Produce  json
+// @Param user_email body string true "User Email"
+// @Param group_name body string true "Group Name"
+// @Success 200 {string} string "User added to group"
+// @Failure 500 {string} string "Error adding user to group"
+// @Router /add-user-to-group [post]
 func (app *Config) AddUserToGroup(w http.ResponseWriter, r *http.Request) {
 	type payload struct {
 		UserEmail string `json:"user_email"`
@@ -117,6 +155,15 @@ func (app *Config) AddUserToGroup(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ListUsers lists all users
+// @Summary List all users
+// @Description Retrieves the list of all users from the database.
+// @Tags User
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} string "List of users"
+// @Failure 500 {string} string "Error listing users"
+// @Router /list-users [get]
 func (app *Config) ListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := app.Models.ListUsers()
 	if err != nil {
@@ -136,6 +183,15 @@ func (app *Config) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ListGroups lists all groups
+// @Summary List all groups
+// @Description Retrieves the list of all groups from the database.
+// @Tags Group
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} string "List of groups"
+// @Failure 500 {string} string "Error listing groups"
+// @Router /list-groups [get]
 func (app *Config) ListGroups(w http.ResponseWriter, r *http.Request) {
 	groups, err := app.Models.ListGroups()
 	if err != nil {
