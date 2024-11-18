@@ -23,8 +23,7 @@ func (app *Config) routes() http.Handler {
 	mux.Use(middleware.Heartbeat("/ping"))
 
 	mux.Post("/add-user", app.AddUser)
-	mux.Post("/schedule-meeting", app.ScheduleMeeting)
-	mux.Get("/generate-meet-link", app.GenerateMeetLink)
+	mux.Get("/oauth2callback", app.OAuthCallback)
 	mux.Get("/check-availability", app.CheckAvailability)
 	mux.Get("/list-users", app.ListUsers)
 	mux.Get("/list-groups", app.ListGroups)

@@ -1,156 +1,87 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"os"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/calendar/v3"
 )
 
-type jsonResponse struct {
-	Error   bool        `json:"error"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+var oauthConfig = &oauth2.Config{
+	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+	RedirectURL:  "http://localhost:80/oauth2callback",
+	Scopes:       []string{calendar.CalendarReadonlyScope},
+	Endpoint:     google.Endpoint,
 }
 
-// AddUser handler
 func (app *Config) AddUser(w http.ResponseWriter, r *http.Request) {
-	var requestPayload struct {
-		Email string `json:"email"`
-		Name  string `json:"name"`
+	url := oauthConfig.AuthCodeURL("state", oauth2.AccessTypeOffline)
+	response := jsonResponse{
+		Error:   false,
+		Message: "Click the link to authorize the app",
+		Data:    url,
 	}
 
-	err := app.readJSON(w, r, &requestPayload)
+	err := app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
-		app.errorJSON(w, err, http.StatusBadRequest)
+		app.errorJSON(w, err, http.StatusInternalServerError)
+	}
+}
+
+func (app *Config) OAuthCallback(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		app.errorJSON(w, fmt.Errorf("no code in request"), http.StatusBadRequest)
+		return
+	}
+
+	token, err := oauthConfig.Exchange(context.Background(), code)
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("failed to exchange token: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	err = app.Models.SaveUserToken(token)
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("failed to save token: %w", err), http.StatusInternalServerError)
 		return
 	}
 
 	response := jsonResponse{
 		Error:   false,
-		Message: "User added successfully",
-		Data: map[string]interface{}{
-			"email": requestPayload.Email,
-			"name":  requestPayload.Name,
-		},
+		Message: "Authorization successful",
 	}
-
 	err = app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
 		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
 
-// CheckAvailability handler
 func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
-	availability := struct {
-		Available         bool   `json:"available"`
-		NextAvailableTime string `json:"nextAvailableTime"`
-	}{
-		Available:         true,
-		NextAvailableTime: "2024-11-20T10:00:00Z",
+	token, err := app.Models.GetUserToken("user_email@example.com")
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("failed to get user token: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	freeSlots, err := app.Models.GetFreeSlots(r.Context(), token)
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("failed to get free slots: %w", err), http.StatusInternalServerError)
+		return
 	}
 
 	response := jsonResponse{
 		Error:   false,
 		Message: "Availability data",
-		Data:    availability,
-	}
-
-	err := app.writeJSON(w, http.StatusOK, response)
-	if err != nil {
-		app.errorJSON(w, err, http.StatusInternalServerError)
-	}
-}
-
-// ScheduleMeeting handler
-func (app *Config) ScheduleMeeting(w http.ResponseWriter, r *http.Request) {
-	var meeting struct {
-		Title        string   `json:"title"`
-		StartTime    string   `json:"startTime"`
-		EndTime      string   `json:"endTime"`
-		Participants []string `json:"participants"`
-	}
-
-	err := app.readJSON(w, r, &meeting)
-	if err != nil {
-		app.errorJSON(w, err, http.StatusBadRequest)
-		return
-	}
-
-	meetLink := "https://meet.google.com/xyz-abc-123"
-
-	response := jsonResponse{
-		Error:   false,
-		Message: "Meeting successfully scheduled",
-		Data: map[string]interface{}{
-			"meetingId": "12345",
-			"meetLink":  meetLink,
-		},
+		Data:    freeSlots,
 	}
 
 	err = app.writeJSON(w, http.StatusOK, response)
-	if err != nil {
-		app.errorJSON(w, err, http.StatusInternalServerError)
-	}
-}
-
-// GenerateMeetLink handler
-func (app *Config) GenerateMeetLink(w http.ResponseWriter, r *http.Request) {
-	meetLink := "https://meet.google.com/xyz-abc-123"
-
-	response := jsonResponse{
-		Error:   false,
-		Message: "Google Meet link generated",
-		Data: map[string]interface{}{
-			"meetLink": meetLink,
-		},
-	}
-
-	err := app.writeJSON(w, http.StatusOK, response)
-	if err != nil {
-		app.errorJSON(w, err, http.StatusInternalServerError)
-	}
-}
-
-// ListUsers handler
-func (app *Config) ListUsers(w http.ResponseWriter, r *http.Request) {
-	users := []struct {
-		UserID string `json:"userId"`
-		Email  string `json:"email"`
-		Name   string `json:"name"`
-	}{
-		{"1", "user1@example.com", "User One"},
-		{"2", "user2@example.com", "User Two"},
-	}
-
-	response := jsonResponse{
-		Error:   false,
-		Message: "List of users",
-		Data:    users,
-	}
-
-	err := app.writeJSON(w, http.StatusOK, response)
-	if err != nil {
-		app.errorJSON(w, err, http.StatusInternalServerError)
-	}
-}
-
-// ListGroups handler
-func (app *Config) ListGroups(w http.ResponseWriter, r *http.Request) {
-	groups := []struct {
-		GroupID   string   `json:"groupId"`
-		GroupName string   `json:"groupName"`
-		Members   []string `json:"members"`
-	}{
-		{"1", "Group 1", []string{"user1@example.com", "user2@example.com"}},
-		{"2", "Group 2", []string{"user3@example.com"}},
-	}
-
-	response := jsonResponse{
-		Error:   false,
-		Message: "List of groups",
-		Data:    groups,
-	}
-
-	err := app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
 		app.errorJSON(w, err, http.StatusInternalServerError)
 	}

@@ -1,127 +1,81 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"time"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/calendar/v3"
 )
 
-// User struct to represent a user
-type User struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
-	Name  string `json:"name"`
+var oauthConfig = &oauth2.Config{
+	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+	ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+	RedirectURL:  "http://localhost:80/oauth2callback",
+	Scopes:       []string{calendar.CalendarReadonlyScope},
+	Endpoint:     google.Endpoint,
 }
 
-// Group struct to represent a group
-type Group struct {
-	ID      int      `json:"id"`
-	Name    string   `json:"name"`
-	Members []string `json:"members"`
-}
-
-// Meeting struct to represent a scheduled meeting
-type Meeting struct {
-	ID           int      `json:"id"`
-	Title        string   `json:"title"`
-	StartTime    string   `json:"startTime"`
-	EndTime      string   `json:"endTime"`
-	Participants []string `json:"participants"`
-	MeetLink     string   `json:"meetLink"`
-}
-
-// Models struct to manage database operations
 type Models struct {
 	DB *sql.DB
 }
 
-// NewModels creates a new Models instance with a database connection
 func NewModels(db *sql.DB) Models {
 	return Models{DB: db}
 }
 
-// AddUser adds a user to the database
-func (m *Models) AddUser(user User) (int, error) {
-	query := `INSERT INTO users (email, name) VALUES ($1, $2) RETURNING id`
-	var userID int
-	err := m.DB.QueryRow(query, user.Email, user.Name).Scan(&userID)
+func (m *Models) SaveUserToken(token *oauth2.Token) error {
+	query := `INSERT INTO user_tokens (access_token, refresh_token, expiry) VALUES ($1, $2, $3)`
+	_, err := m.DB.Exec(query, token.AccessToken, token.RefreshToken, token.Expiry)
 	if err != nil {
-		return 0, fmt.Errorf("unable to insert user: %w", err)
+		return fmt.Errorf("failed to save token: %w", err)
 	}
-	return userID, nil
+	return nil
 }
 
-// ListUsers retrieves all users from the database
-func (m *Models) ListUsers() ([]User, error) {
-	rows, err := m.DB.Query("SELECT id, email, name FROM users")
+func (m *Models) GetUserToken(email string) (*oauth2.Token, error) {
+	query := `SELECT access_token, refresh_token, expiry FROM user_tokens WHERE email = $1`
+	row := m.DB.QueryRow(query, email)
+
+	var accessToken, refreshToken string
+	var expiry time.Time
+	err := row.Scan(&accessToken, &refreshToken, &expiry)
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve users: %w", err)
+		return nil, fmt.Errorf("failed to get token: %w", err)
 	}
-	defer rows.Close()
 
-	var users []User
-	for rows.Next() {
-		var user User
-		if err := rows.Scan(&user.ID, &user.Email, &user.Name); err != nil {
-			return nil, fmt.Errorf("unable to scan user: %w", err)
-		}
-		users = append(users, user)
-	}
-	return users, nil
+	return &oauth2.Token{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		Expiry:       expiry,
+	}, nil
 }
 
-// ListGroups retrieves all groups from the database
-func (m *Models) ListGroups() ([]Group, error) {
-	rows, err := m.DB.Query("SELECT id, name FROM groups")
+func (m *Models) GetFreeSlots(ctx context.Context, token *oauth2.Token) ([]string, error) {
+	client := oauthConfig.Client(ctx, token)
+	srv, err := calendar.New(client)
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve groups: %w", err)
+		return nil, fmt.Errorf("unable to create calendar service: %w", err)
 	}
-	defer rows.Close()
 
-	var groups []Group
-	for rows.Next() {
-		var group Group
-		if err := rows.Scan(&group.ID, &group.Name); err != nil {
-			return nil, fmt.Errorf("unable to scan group: %w", err)
-		}
-		groups = append(groups, group)
-	}
-	return groups, nil
-}
-
-// AddGroup adds a group to the database
-func (m *Models) AddGroup(group Group) (int, error) {
-	query := `INSERT INTO groups (name) VALUES ($1) RETURNING id`
-	var groupID int
-	err := m.DB.QueryRow(query, group.Name).Scan(&groupID)
+	events, err := srv.Events.List("primary").
+		TimeMin("2024-11-18T00:00:00Z").
+		TimeMax("2024-11-20T00:00:00Z").
+		SingleEvents(true).
+		OrderBy("startTime").Do()
 	if err != nil {
-		return 0, fmt.Errorf("unable to insert group: %w", err)
+		return nil, fmt.Errorf("unable to retrieve calendar events: %w", err)
 	}
-	return groupID, nil
-}
 
-// CheckAvailability checks the availability of a user for a meeting
-func (m *Models) CheckAvailability(userID int) (bool, string, error) {
-	// Mock implementation (integrate with Google Calendar API or other sources as needed)
-	// For now, just return availability and mock time.
-	return true, "2024-11-20T10:00:00Z", nil
-}
-
-// ScheduleMeeting schedules a new meeting in the database
-func (m *Models) ScheduleMeeting(meeting Meeting) (int, error) {
-	query := `INSERT INTO meetings (title, start_time, end_time, participants, meet_link) 
-	          VALUES ($1, $2, $3, $4, $5) RETURNING id`
-	var meetingID int
-	err := m.DB.QueryRow(query, meeting.Title, meeting.StartTime, meeting.EndTime,
-		meeting.Participants, meeting.MeetLink).Scan(&meetingID)
-	if err != nil {
-		return 0, fmt.Errorf("unable to schedule meeting: %w", err)
+	var freeSlots []string
+	for _, event := range events.Items {
+		fmt.Printf("Event: %s (%s - %s)\n", event.Summary, event.Start.DateTime, event.End.DateTime)
+		// W tym miejscu można zaimplementować logikę szukania wolnych slotów
 	}
-	return meetingID, nil
-}
 
-// GenerateMeetLink generates a Google Meet link for a meeting
-func (m *Models) GenerateMeetLink(meetingID int) (string, error) {
-	// Mock implementation (this would call the Google Calendar API or similar service in a real app)
-	// For now, just return a mock link.
-	return fmt.Sprintf("https://meet.google.com/xyz-abc-%d", meetingID), nil
+	return freeSlots, nil
 }
