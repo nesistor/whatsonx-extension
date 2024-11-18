@@ -10,6 +10,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/option"
 )
 
 var oauthConfig = &oauth2.Config{
@@ -55,28 +56,85 @@ func (m *Models) GetUserToken(email string) (*oauth2.Token, error) {
 	}, nil
 }
 
+// GetFreeSlots retrieves free time slots for the next week for the authenticated user.
 func (m *Models) GetFreeSlots(ctx context.Context, token *oauth2.Token) ([]string, error) {
+	// Create a custom HTTP client
 	client := oauthConfig.Client(ctx, token)
-	srv, err := calendar.New(client)
+
+	// Create the Google Calendar service using the new recommended method
+	srv, err := calendar.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		return nil, fmt.Errorf("unable to create calendar service: %w", err)
 	}
 
+	// Get the current time and define the time range for the next week
+	now := time.Now()
+	startOfWeek := now.UTC().Format(time.RFC3339)                       // Start of today in UTC
+	endOfWeek := now.Add(7 * 24 * time.Hour).UTC().Format(time.RFC3339) // One week from now
+
+	// Fetch the events for the next week
 	events, err := srv.Events.List("primary").
-		TimeMin("2024-11-18T00:00:00Z").
-		TimeMax("2024-11-20T00:00:00Z").
+		TimeMin(startOfWeek).
+		TimeMax(endOfWeek).
 		SingleEvents(true).
-		OrderBy("startTime").Do()
+		OrderBy("startTime").
+		Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve calendar events: %w", err)
 	}
 
+	// Create a slice to store the free time slots
 	var freeSlots []string
+
+	// Let's assume work hours are from 9:00 AM to 5:00 PM, adjust according to your needs.
+	workStart := 9
+	workEnd := 17
+
+	// Loop through the events and find gaps between them
+	var lastEndTime time.Time
 	for _, event := range events.Items {
-		fmt.Printf("Event: %s (%s - %s)\n", event.Summary, event.Start.DateTime, event.End.DateTime)
-		// W tym miejscu można zaimplementować logikę szukania wolnych slotów
+		// Parse the event start and end time
+		startTime, err := time.Parse(time.RFC3339, event.Start.DateTime)
+		if err != nil {
+			startTime, err = time.Parse(time.RFC3339, event.Start.Date) // handle full-day events
+			if err != nil {
+				return nil, fmt.Errorf("error parsing event start time: %w", err)
+			}
+		}
+
+		// If this is the first event, check if there's a gap before it
+		if lastEndTime.IsZero() {
+			if startTime.Hour() > workStart {
+				// Found a free slot before the first event
+				freeSlot := fmt.Sprintf("%s to %s", fmt.Sprintf("%02d:00", workStart), startTime.Format("15:04"))
+				freeSlots = append(freeSlots, freeSlot)
+			}
+		} else {
+			// Check for a gap between the last event and the current one
+			if startTime.Sub(lastEndTime) > time.Minute*30 { // Allow a 30 min gap
+				freeSlot := fmt.Sprintf("%s to %s", lastEndTime.Format("15:04"), startTime.Format("15:04"))
+				freeSlots = append(freeSlots, freeSlot)
+			}
+		}
+
+		// Update the last end time
+		endTime, err := time.Parse(time.RFC3339, event.End.DateTime)
+		if err != nil {
+			endTime, err = time.Parse(time.RFC3339, event.End.Date) // handle full-day events
+			if err != nil {
+				return nil, fmt.Errorf("error parsing event end time: %w", err)
+			}
+		}
+		lastEndTime = endTime
 	}
 
+	// Check if there are free slots after the last event for the rest of the day
+	if !lastEndTime.IsZero() && lastEndTime.Hour() < workEnd {
+		freeSlot := fmt.Sprintf("%s to %s", lastEndTime.Format("15:04"), fmt.Sprintf("%02d:00", workEnd))
+		freeSlots = append(freeSlots, freeSlot)
+	}
+
+	// Return the list of free slots
 	return freeSlots, nil
 }
 

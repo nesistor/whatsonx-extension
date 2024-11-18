@@ -122,7 +122,7 @@ func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 // @Produce  json
 // @Param user_data body AddUserToGroupRequest true "User and Group Data"
 // @Success 200 {string} string "User added to group"
-// @Failure 500 {string} string "Error adding user to group"
+// @Failure 500 {string} string "Error adding userhttps://github.com/nesistor/whatsonx-meeting-scheduler to group"
 // @Router /add-user-to-group [post]
 
 type AddUserToGroupRequest struct {

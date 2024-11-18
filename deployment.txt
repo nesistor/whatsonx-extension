@@ -1,0 +1,5 @@
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+docker build -t gcr.io/YOUR_PROJECT_ID/calendar-meeting-scheduler .
+gcloud auth configure-docker
+docker push gcr.io/YOUR_PROJECT_ID/calendar-meeting-scheduler
