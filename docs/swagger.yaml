@@ -1,0 +1,168 @@
+basePath: /
+host: localhost:80
+info:
+  contact:
+    email: karolmalicki.001@gmail.com
+    name: API Support
+  description: API for scheduling meetings and managing users/groups using Google
+    Calendar.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://example.com/terms/
+  title: Calendar Meeting Scheduler API
+  version: "1.0"
+paths:
+  /add-user:
+    post:
+      consumes:
+      - application/json
+      description: Redirects the user to Google OAuth2 authorization page to allow
+        app access.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User authorization link
+          schema:
+            type: string
+        "500":
+          description: Error initiating authorization
+          schema:
+            type: string
+      summary: Initiates user authorization
+      tags:
+      - User
+  /add-user-to-group:
+    post:
+      consumes:
+      - application/json
+      description: Adds a specified user to a specified group.
+      parameters:
+      - description: User Email
+        in: body
+        name: user_email
+        required: true
+        schema:
+          type: string
+      - description: Group Name
+        in: body
+        name: group_name
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User added to group
+          schema:
+            type: string
+        "500":
+          description: Error adding user to group
+          schema:
+            type: string
+      summary: Add a user to a group
+      tags:
+      - Group
+  /check-availability:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves free slots from the user's Google Calendar within a given
+        time range.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of free slots
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: Error retrieving availability
+          schema:
+            type: string
+      summary: Check user calendar availability
+      tags:
+      - Calendar
+  /list-groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the list of all groups from the database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of groups
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: Error listing groups
+          schema:
+            type: string
+      summary: List all groups
+      tags:
+      - Group
+  /list-users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the list of all users from the database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              type: string
+            type: array
+        "500":
+          description: Error listing users
+          schema:
+            type: string
+      summary: List all users
+      tags:
+      - User
+  /oauth2callback:
+    get:
+      consumes:
+      - application/json
+      description: Handles the Google OAuth2 callback and stores the access token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authorization successful
+          schema:
+            type: string
+        "500":
+          description: Error during OAuth2 callback
+          schema:
+            type: string
+      summary: Handles OAuth2 callback
+      tags:
+      - User
+  /routes:
+    get:
+      consumes:
+      - application/json
+      description: Defines all the routes and the associated handlers for the application.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Routes set successfully
+          schema:
+            type: string
+      summary: Set up API routes for the application
+      tags:
+      - Routes
+schemes:
+- http
+swagger: "2.0"
