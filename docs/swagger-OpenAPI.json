@@ -1,0 +1,223 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Calendar Meeting Scheduler API",
+    "description": "API for scheduling meetings and managing users/groups using Google Calendar.",
+    "version": "1.0.0",
+    "termsOfService": "http://example.com/terms/",
+    "contact": {
+      "name": "API Support",
+      "email": "karolmalicki.001@gmail.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:80"
+    }
+  ],
+  "paths": {
+    "/add-user": {
+      "post": {
+        "summary": "Initiates user authorization",
+        "description": "Redirects the user to Google OAuth2 authorization page to allow app access.",
+        "tags": ["User"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserToGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User authorization link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error initiating authorization",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/check-availability": {
+      "get": {
+        "summary": "Check user calendar availability",
+        "description": "Retrieves free slots from the user's Google Calendar within a given time range.",
+        "tags": ["Calendar"],
+        "responses": {
+          "200": {
+            "description": "List of free slots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error retrieving availability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/list-groups": {
+      "get": {
+        "summary": "List all groups",
+        "description": "Retrieves the list of all groups from the database.",
+        "tags": ["Group"],
+        "responses": {
+          "200": {
+            "description": "List of groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error listing groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/list-users": {
+      "get": {
+        "summary": "List all users",
+        "description": "Retrieves the list of all users from the database.",
+        "tags": ["User"],
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error listing users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oauth2callback": {
+      "get": {
+        "summary": "Handles OAuth2 callback",
+        "description": "Handles the Google OAuth2 callback and stores the access token.",
+        "tags": ["User"],
+        "responses": {
+          "200": {
+            "description": "Authorization successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error during OAuth2 callback",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/routes": {
+      "get": {
+        "summary": "Set up API routes for the application",
+        "description": "Defines all the routes and the associated handlers for the application.",
+        "tags": ["Routes"],
+        "responses": {
+          "200": {
+            "description": "Routes set successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddUserToGroupRequest": {
+        "type": "object",
+        "properties": {
+          "user_email": {
+            "type": "string"
+          },
+          "group_name": {
+            "type": "string"
+          }
+        },
+        "required": ["user_email", "group_name"]
+      }
+    }
+  }
+}

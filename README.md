@@ -12,7 +12,13 @@ This project provides a RESTful API that integrates with Google Calendar to enab
 - **Group Management**: Add users to specific groups for team-based scheduling.
 - **Invitation and Meeting Scheduling**: Send Google Meet invitations and automatically add events to participants' calendars.
 
-## Endpoints Overview
+## API Documentation
+
+The API documentation is automatically generated and can be viewed through the Swagger UI. To access the documentation, start the application and visit:
+
+[Swagger UI](http://localhost:8080/swagger)
+
+## API Endpoints
 
 | Endpoint                 | Method | Description                                  |
 |--------------------------|--------|----------------------------------------------|
@@ -22,27 +28,31 @@ This project provides a RESTful API that integrates with Google Calendar to enab
 | `/add-user-to-group`     | `POST` | Adds a user to a specific group.            |
 | `/list-users`            | `GET`  | Lists all registered users.                 |
 | `/list-groups`           | `GET`  | Lists all available groups.                 |
+| `/swagger/*`             | `GET`  | View the Swagger documentation.             |
 
 ## How It Works
 
-1.User Authorization
-Users authorize the application via Google OAuth2. The API stores the access and refresh tokens securely for calendar operations.
+### 1. User Authorization
+Users authorize the application via **Google OAuth2**. The API securely stores the access and refresh tokens for calendar operations.
 
-Check Availability
-Use the /check-availability endpoint to query free slots in a user’s calendar within a specified time range.
+### 2. Check Availability
+Use the `/check-availability` endpoint to query available time slots in a user's calendar within a specified time range.
 
-Propose Meetings
-Based on availability, WatsonX can propose a meeting time and use this API to schedule the meeting and send invites.
+### 3. Propose Meetings
+Based on the available time slots, **WatsonX** can propose a meeting time and use the API to schedule the meeting, automatically sending invites to participants.
 
-Group Management
-Users can be grouped together using /add-user-to-group, enabling meeting proposals for entire teams or departments.
+### 4. Group Management
+Users can be grouped together using the `/add-user-to-group` endpoint, enabling meeting proposals for entire teams or departments.
 
-Invitation and Meeting Scheduling
-Automatically send Google Meet invitations and add the event to participants’ calendars.
-## Instalation
+### 5. Invitation and Meeting Scheduling
+The system automatically sends **Google Meet** invitations and adds the scheduled event to participants’ calendars.
+## Installation
 
-1. Clone the repository:
+Follow these steps to install and set up **Meeting Scheduler** on your local machine.
 
-   ```bash
-   git clone git@github.com:nesistor/whatsonx-meeting-scheduler.git
-   cd whatsonx-meeting-scheduler
+### 1. Clone the repository
+
+Start by cloning the repository to your local machine:
+
+```bash
+git clone git@github.com:nesistor/whatsonx-meeting-scheduler.git

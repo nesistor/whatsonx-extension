@@ -52,55 +52,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/add-user-to-group": {
-            "post": {
-                "description": "Adds a specified user to a specified group.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Group"
-                ],
-                "summary": "Add a user to a group",
-                "parameters": [
-                    {
-                        "description": "User Email",
-                        "name": "user_email",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "description": "Group Name",
-                        "name": "group_name",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User added to group",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error adding user to group",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/check-availability": {
             "get": {
                 "description": "Retrieves free slots from the user's Google Calendar within a given time range.",

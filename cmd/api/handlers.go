@@ -120,18 +120,19 @@ func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 // @Tags Group
 // @Accept  json
 // @Produce  json
-// @Param user_email body string true "User Email"
-// @Param group_name body string true "Group Name"
+// @Param user_data body AddUserToGroupRequest true "User and Group Data"
 // @Success 200 {string} string "User added to group"
 // @Failure 500 {string} string "Error adding user to group"
 // @Router /add-user-to-group [post]
-func (app *Config) AddUserToGroup(w http.ResponseWriter, r *http.Request) {
-	type payload struct {
-		UserEmail string `json:"user_email"`
-		GroupName string `json:"group_name"`
-	}
 
-	var req payload
+type AddUserToGroupRequest struct {
+	UserEmail string `json:"user_email"`
+	GroupName string `json:"group_name"`
+}
+
+func (app *Config) AddUserToGroup(w http.ResponseWriter, r *http.Request) {
+
+	var req AddUserToGroupRequest
 	err := app.readJSON(w, r, &req)
 	if err != nil {
 		app.errorJSON(w, fmt.Errorf("invalid request body: %w", err), http.StatusBadRequest)

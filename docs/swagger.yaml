@@ -33,38 +33,6 @@ paths:
       summary: Initiates user authorization
       tags:
       - User
-  /add-user-to-group:
-    post:
-      consumes:
-      - application/json
-      description: Adds a specified user to a specified group.
-      parameters:
-      - description: User Email
-        in: body
-        name: user_email
-        required: true
-        schema:
-          type: string
-      - description: Group Name
-        in: body
-        name: group_name
-        required: true
-        schema:
-          type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: User added to group
-          schema:
-            type: string
-        "500":
-          description: Error adding user to group
-          schema:
-            type: string
-      summary: Add a user to a group
-      tags:
-      - Group
   /check-availability:
     get:
       consumes:
