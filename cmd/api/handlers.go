@@ -86,3 +86,71 @@ func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
+
+func (app *Config) AddUserToGroup(w http.ResponseWriter, r *http.Request) {
+	type payload struct {
+		UserEmail string `json:"user_email"`
+		GroupName string `json:"group_name"`
+	}
+
+	var req payload
+	err := app.readJSON(w, r, &req)
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("invalid request body: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	err = app.Models.AddUserToGroup(req.UserEmail, req.GroupName)
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("failed to add user to group: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := jsonResponse{
+		Error:   false,
+		Message: fmt.Sprintf("User %s added to group %s", req.UserEmail, req.GroupName),
+	}
+
+	err = app.writeJSON(w, http.StatusOK, response)
+	if err != nil {
+		app.errorJSON(w, err, http.StatusInternalServerError)
+	}
+}
+
+func (app *Config) ListUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := app.Models.ListUsers()
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("failed to list users: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := jsonResponse{
+		Error:   false,
+		Message: "List of users",
+		Data:    users,
+	}
+
+	err = app.writeJSON(w, http.StatusOK, response)
+	if err != nil {
+		app.errorJSON(w, err, http.StatusInternalServerError)
+	}
+}
+
+func (app *Config) ListGroups(w http.ResponseWriter, r *http.Request) {
+	groups, err := app.Models.ListGroups()
+	if err != nil {
+		app.errorJSON(w, fmt.Errorf("failed to list groups: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	response := jsonResponse{
+		Error:   false,
+		Message: "List of groups",
+		Data:    groups,
+	}
+
+	err = app.writeJSON(w, http.StatusOK, response)
+	if err != nil {
+		app.errorJSON(w, err, http.StatusInternalServerError)
+	}
+}

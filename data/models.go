@@ -79,3 +79,103 @@ func (m *Models) GetFreeSlots(ctx context.Context, token *oauth2.Token) ([]strin
 
 	return freeSlots, nil
 }
+
+func (m *Models) AddUserToGroup(userEmail, groupName string) error {
+	tx, err := m.DB.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Ensure group exists
+	queryGroup := `INSERT INTO groups (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`
+	_, err = tx.Exec(queryGroup, groupName)
+	if err != nil {
+		return fmt.Errorf("failed to insert group: %w", err)
+	}
+
+	// Link user to group
+	queryLink := `
+		INSERT INTO user_groups (user_email, group_name) 
+		VALUES ($1, $2) 
+		ON CONFLICT DO NOTHING
+	`
+	_, err = tx.Exec(queryLink, userEmail, groupName)
+	if err != nil {
+		return fmt.Errorf("failed to link user to group: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (m *Models) ListUsers() ([]string, error) {
+	query := `SELECT email FROM users`
+	rows, err := m.DB.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []string
+	for rows.Next() {
+		var email string
+		err := rows.Scan(&email)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan user email: %w", err)
+		}
+		users = append(users, email)
+	}
+
+	return users, nil
+}
+
+func (m *Models) ListGroups() ([]string, error) {
+	query := `SELECT name FROM groups`
+	rows, err := m.DB.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query groups: %w", err)
+	}
+	defer rows.Close()
+
+	var groups []string
+	for rows.Next() {
+		var name string
+		err := rows.Scan(&name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan group name: %w", err)
+		}
+		groups = append(groups, name)
+	}
+
+	return groups, nil
+}
+func (m *Models) InitializeDatabase() error {
+	queries := []string{
+		`CREATE TABLE IF NOT EXISTS groups (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(255) UNIQUE NOT NULL
+		);`,
+		`CREATE TABLE IF NOT EXISTS user_groups (
+			id SERIAL PRIMARY KEY,
+			user_email VARCHAR(255) NOT NULL,
+			group_name VARCHAR(255) NOT NULL,
+			FOREIGN KEY (user_email) REFERENCES users(email),
+			FOREIGN KEY (group_name) REFERENCES groups(name),
+			UNIQUE (user_email, group_name)
+		);`,
+	}
+
+	for _, query := range queries {
+		_, err := m.DB.Exec(query)
+		if err != nil {
+			return fmt.Errorf("failed to execute query: %w", err)
+		}
+	}
+
+	return nil
+}

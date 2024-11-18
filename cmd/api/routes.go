@@ -25,6 +25,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/add-user", app.AddUser)
 	mux.Get("/oauth2callback", app.OAuthCallback)
 	mux.Get("/check-availability", app.CheckAvailability)
+	mux.Post("/add-user-to-group", app.AddUserToGroup)
 	mux.Get("/list-users", app.ListUsers)
 	mux.Get("/list-groups", app.ListGroups)
 
