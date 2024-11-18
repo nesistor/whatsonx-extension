@@ -1,3 +1,18 @@
+// @title Calendar Meeting Scheduler API
+// @version 1.0
+// @description API for scheduling meetings and managing users/groups using Google Calendar.
+// @termsOfService http://example.com/terms/
+
+// @contact.name API Support
+// @contact.url
+// @contact.email karolmalicki.001@gmail.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:80
+// @BasePath /
+// @schemes http
 package main
 
 import (
@@ -24,20 +39,6 @@ type Config struct {
 	Models data.Models
 }
 
-// @title Google Meeting Scheduler API
-// @version 1.0
-// @description API do synchronizacji kalendarza Google i planowania spotkań
-
-// @BasePath /
-
-// main function starts the application, connects to the database, and listens for HTTP requests
-// @Summary Starts the Google Meeting Scheduler Service
-// @Description Initializes the service and listens for incoming HTTP requests.
-// @Tags Startup
-// @Accept  json
-// @Produce  json
-// @Success 200 {string} string "Service Started"
-// @Router / [get]
 func main() {
 	log.Println("Starting calendar meeting scheduler service")
 
@@ -66,15 +67,6 @@ func main() {
 	select {}
 }
 
-// connectToDB establishes a connection to the PostgreSQL database
-// @Summary Connect to the PostgreSQL database
-// @Description Tries to connect to the database and retries on failure.
-// @Tags Database
-// @Accept  json
-// @Produce  json
-// @Success 200 {string} string "Connected to database"
-// @Failure 500 {string} string "Error connecting to the database"
-// @Router /connect-to-db [get]
 func connectToDB() *sql.DB {
 	dsn := os.Getenv("DSN")
 	log.Println("DSN:", dsn)
@@ -100,15 +92,6 @@ func connectToDB() *sql.DB {
 	}
 }
 
-// openDB tries to open a database connection and pings it
-// @Summary Open a database connection
-// @Description Attempts to open a connection and check if the database is reachable.
-// @Tags Database
-// @Accept  json
-// @Produce  json
-// @Success 200 {string} string "Database connection successful"
-// @Failure 500 {string} string "Error opening database"
-// @Router /open-db [get]
 func openDB(dsn string) (*sql.DB, error) {
 	log.Println("Trying to connect to the database...")
 	db, err := sql.Open("pgx", dsn)

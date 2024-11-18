@@ -6,6 +6,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	_ "calendar-extension/docs"
 )
 
 // routes sets up the API endpoints for the application
@@ -36,6 +39,8 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/add-user-to-group", app.AddUserToGroup)
 	mux.Get("/list-users", app.ListUsers)
 	mux.Get("/list-groups", app.ListGroups)
+
+	mux.Get("/swagger/*", httpSwagger.WrapHandler)
 
 	return mux
 }
