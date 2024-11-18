@@ -1,0 +1,287 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Calendar Meeting Scheduler API",
+    "version": "1.0.0",
+    "description": "API for scheduling meetings, managing users and groups, and generating Google Meet links using Google Calendar integration."
+  },
+  "servers": [
+    {
+      "url": "https://api.google-scheduler-meeting.com"
+    }
+  ],
+  "paths": {
+    "/check-availability": {
+      "get": {
+        "summary": "Check calendar availability for a user or group",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "description": "ID of the user to check availability for",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "query",
+            "required": false,
+            "description": "ID of the group to check availability for",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Availability data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "available": {
+                      "type": "boolean"
+                    },
+                    "nextAvailableTime": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schedule-meeting": {
+      "post": {
+        "summary": "Schedule a meeting",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "startTime": { "type": "string", "format": "date-time" },
+                  "endTime": { "type": "string", "format": "date-time" },
+                  "participants": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "email" }
+                  }
+                },
+                "required": ["title", "startTime", "endTime", "participants"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Meeting successfully scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meetingId": { "type": "string" },
+                    "meetLink": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate-meet-link": {
+      "get": {
+        "summary": "Generate Google Meet link for a meeting",
+        "parameters": [
+          {
+            "name": "meetingId",
+            "in": "query",
+            "required": true,
+            "description": "The ID of the scheduled meeting to generate a Google Meet link",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Google Meet link generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meetLink": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/add-user": {
+      "post": {
+        "summary": "Add a new user to the application by email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "name": { "type": "string" }
+                },
+                "required": ["email", "name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User successfully added and linked to Google Calendar",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": { "type": "string", "format": "email" },
+                    "name": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/add-group": {
+      "post": {
+        "summary": "Create a new user group",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "groupId": { "type": "string" },
+                  "groupName": { "type": "string" },
+                  "members": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "email" }
+                  }
+                },
+                "required": ["groupId", "groupName", "members"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Group successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groupId": { "type": "string" },
+                    "groupName": { "type": "string" },
+                    "members": {
+                      "type": "array",
+                      "items": { "type": "string", "format": "email" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/list-groups": {
+      "get": {
+        "summary": "List all user groups",
+        "responses": {
+          "200": {
+            "description": "List of user groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "groupId": { "type": "string" },
+                      "groupName": { "type": "string" },
+                      "members": {
+                        "type": "array",
+                        "items": { "type": "string", "format": "email" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/list-users": {
+      "get": {
+        "summary": "List all users in the system",
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "userId": { "type": "string" },
+                      "email": { "type": "string", "format": "email" },
+                      "name": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+            "tokenUrl": "https://oauth2.googleapis.com/token",
+            "scopes": {
+              "https://www.googleapis.com/auth/calendar": "Manage and view Google Calendar"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "OAuth2": ["https://www.googleapis.com/auth/calendar"]
+    }
+  ]
+}

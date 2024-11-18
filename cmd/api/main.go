@@ -8,10 +8,9 @@ import (
 	"os"
 	"time"
 
+	"calendar-extension/data"
+
 	_ "github.com/jackc/pgx/v4/stdlib"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 )
 
 const (
@@ -22,7 +21,7 @@ var counts int64
 
 type Config struct {
 	DB     *sql.DB
-	Models Models
+	Models data.Models
 }
 
 func main() {
@@ -35,7 +34,7 @@ func main() {
 
 	app := Config{
 		DB:     conn,
-		Models: NewModels(conn),
+		Models: data.NewModels(conn),
 	}
 
 	srv := &http.Server{

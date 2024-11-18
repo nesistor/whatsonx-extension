@@ -23,9 +23,6 @@ func (app *Config) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Logic to add user (save to DB or Google Calendar)
-	// Assume we successfully added the user
-
 	response := jsonResponse{
 		Error:   false,
 		Message: "User added successfully",
@@ -37,18 +34,12 @@ func (app *Config) AddUser(w http.ResponseWriter, r *http.Request) {
 
 	err = app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
 
 // CheckAvailability handler
 func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
-	userID := r.URL.Query().Get("user_id")
-	groupID := r.URL.Query().Get("group_id")
-
-	// Check availability logic here (use Google Calendar API or mock data)
-	// Assume we found availability
-
 	availability := struct {
 		Available         bool   `json:"available"`
 		NextAvailableTime string `json:"nextAvailableTime"`
@@ -65,7 +56,7 @@ func (app *Config) CheckAvailability(w http.ResponseWriter, r *http.Request) {
 
 	err := app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
 
@@ -84,9 +75,6 @@ func (app *Config) ScheduleMeeting(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Logic to schedule meeting (save to DB or Google Calendar)
-
-	// Assume meeting scheduled successfully
 	meetLink := "https://meet.google.com/xyz-abc-123"
 
 	response := jsonResponse{
@@ -100,15 +88,13 @@ func (app *Config) ScheduleMeeting(w http.ResponseWriter, r *http.Request) {
 
 	err = app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
 
 // GenerateMeetLink handler
 func (app *Config) GenerateMeetLink(w http.ResponseWriter, r *http.Request) {
-	// Logic to generate Google Meet link
-	meetingID := r.URL.Query().Get("meetingId")
-	meetLink := "https://meet.google.com/xyz-abc-123" // Mock link
+	meetLink := "https://meet.google.com/xyz-abc-123"
 
 	response := jsonResponse{
 		Error:   false,
@@ -120,13 +106,12 @@ func (app *Config) GenerateMeetLink(w http.ResponseWriter, r *http.Request) {
 
 	err := app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
 
 // ListUsers handler
 func (app *Config) ListUsers(w http.ResponseWriter, r *http.Request) {
-	// List all users logic
 	users := []struct {
 		UserID string `json:"userId"`
 		Email  string `json:"email"`
@@ -144,13 +129,12 @@ func (app *Config) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 	err := app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
 
 // ListGroups handler
 func (app *Config) ListGroups(w http.ResponseWriter, r *http.Request) {
-	// List all groups logic
 	groups := []struct {
 		GroupID   string   `json:"groupId"`
 		GroupName string   `json:"groupName"`
@@ -168,6 +152,6 @@ func (app *Config) ListGroups(w http.ResponseWriter, r *http.Request) {
 
 	err := app.writeJSON(w, http.StatusOK, response)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.errorJSON(w, err, http.StatusInternalServerError)
 	}
 }
